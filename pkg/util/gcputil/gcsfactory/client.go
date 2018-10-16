@@ -40,14 +40,16 @@ func NewClientFromSecret(ctx context.Context, kubecli kubernetes.Interface, name
 		}
 	}()
 
-	se, err := kubecli.CoreV1().Secrets(namespace).Get(gcsSecret, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get k8s secret: %v", err)
+	var authOptions []option.ClientOption
+	if se, err := kubecli.CoreV1().Secrets(namespace).Get(gcsSecret, metav1.GetOptions{}); err == nil {
+		if accessToken, ok := se.Data[api.GCPAccessToken]; ok {
+			authOptions = append(authOptions, option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: string(accessToken)})))
+		} else if credentialsJson, ok := se.Data[api.GCPCredentialsJson]; ok {
+			authOptions = append(authOptions, option.WithCredentialsJSON(credentialsJson))
+		}
 	}
 
-	accessToken := se.Data[api.GCPAccessToken]
-
-	gcs, err := storage.NewClient(ctx, option.WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{AccessToken: string(accessToken)})))
+	gcs, err := storage.NewClient(ctx, authOptions...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %v", err)
 	}

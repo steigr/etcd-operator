@@ -31,6 +31,7 @@ const (
 	// Google GCS related consts
 	BackupStorageTypeGCS BackupStorageType = "GCS"
 	GCPAccessToken                         = "access-token"
+	GCPCredentialsJson                     = "credentials.json"
 )
 
 type BackupStorageType string
@@ -146,5 +147,10 @@ type GCSBackupSource struct {
 	Path string `json:"path"`
 
 	// The name of the secret object that stores the Google storage credential
-	GCPSecret string `json:"gcpSecret"`
+	// containing at most ONE of the following:
+	// An access token with file name of 'access-token'.
+	// JSON credentials with file name of 'credentials.json'.
+	//
+	// If omitted, client will use the default application credentials.
+	GCPSecret string `json:"gcpSecret,omitempty"`
 }
