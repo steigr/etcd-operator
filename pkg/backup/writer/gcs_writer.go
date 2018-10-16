@@ -44,13 +44,7 @@ func (gcsw *gcsWriter) Write(ctx context.Context, path string, r io.Reader) (int
 		return 0, err
 	}
 
-	bucketRef := gcsw.gcs.Bucket(bucket)
-	_, err = bucketRef.Attrs(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	w := bucketRef.Object(key).NewWriter(ctx)
+	w := gcsw.gcs.Bucket(bucket).Object(key).NewWriter(ctx)
 	defer func() {
 		err := w.Close()
 		if err != nil {
